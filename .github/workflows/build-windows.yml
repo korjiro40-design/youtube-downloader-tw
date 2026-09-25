@@ -15,38 +15,34 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
       - name: Install dependencies
         run: pip install -r requirements.txt
-
-      - name: Download FFmpeg
+      - name: Download FFmpeg and FFprobe
         shell: powershell
         run: |
           Invoke-WebRequest -Uri "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip" -OutFile ffmpeg.zip
           Expand-Archive ffmpeg.zip -DestinationPath ffmpeg-temp
-          $ff = Get-ChildItem -Path ffmpeg-temp -Recurse -Filter ffmpeg.exe | Select-Object -First 1
-          Copy-Item $ff.FullName .\ffmpeg.exe
-
+          $ffmpeg = Get-ChildItem -Path ffmpeg-temp -Recurse -Filter ffmpeg.exe | Select-Object -First 1
+          $ffprobe = Get-ChildItem -Path ffmpeg-temp -Recurse -Filter ffprobe.exe | Select-Object -First 1
+          Copy-Item $ffmpeg.FullName .\ffmpeg.exe
+          Copy-Item $ffprobe.FullName .\ffprobe.exe
       - name: Build EXE
         shell: powershell
         run: |
-          pyinstaller --noconfirm --clean --onefile --windowed --name "YouTubeDownloaderTW" --add-binary "ffmpeg.exe;." --collect-all yt_dlp main.py
-
+          pyinstaller --noconfirm --clean --onefile --windowed --name "YouTubeDownloaderTW" --add-binary "ffmpeg.exe;." --add-binary "ffprobe.exe;." --collect-all yt_dlp main.py
       - name: Prepare portable package
         shell: powershell
         run: |
           New-Item -ItemType Directory -Force portable
           Copy-Item "dist\YouTubeDownloaderTW.exe" "portable\YouTubeDownloaderTW.exe"
           Copy-Item "README.md" "portable\README.md"
-
       - name: Upload portable package
         uses: actions/upload-artifact@v4
         with:
-          name: YouTubeDownloaderTW-Windows-Portable
+          name: YouTubeDownloaderTW-v3-Windows-Portable
           path: portable/
           if-no-files-found: error
