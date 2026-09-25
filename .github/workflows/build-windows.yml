@@ -1,4 +1,4 @@
-name: 建置 Windows 可攜版
+name: Build Windows Portable
 
 on:
   workflow_dispatch:
@@ -13,18 +13,18 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: 取得原始碼
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 安裝 Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: 安裝套件
+      - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: 下載 FFmpeg
+      - name: Download FFmpeg
         shell: powershell
         run: |
           Invoke-WebRequest -Uri "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip" -OutFile ffmpeg.zip
@@ -32,21 +32,21 @@ jobs:
           $ff = Get-ChildItem -Path ffmpeg-temp -Recurse -Filter ffmpeg.exe | Select-Object -First 1
           Copy-Item $ff.FullName .\ffmpeg.exe
 
-      - name: 建置單一 EXE
+      - name: Build EXE
         shell: powershell
         run: |
-          pyinstaller --noconfirm --clean --onefile --windowed --name "YouTube下載器" --add-binary "ffmpeg.exe;." --collect-all yt_dlp main.py
+          pyinstaller --noconfirm --clean --onefile --windowed --name "YouTubeDownloaderTW" --add-binary "ffmpeg.exe;." --collect-all yt_dlp main.py
 
-      - name: 建立可攜包
+      - name: Prepare portable package
         shell: powershell
         run: |
           New-Item -ItemType Directory -Force portable
-          Copy-Item "dist\YouTube下載器.exe" "portable\YouTube下載器.exe"
-          Copy-Item "README.md" "portable\使用說明.md"
+          Copy-Item "dist\YouTubeDownloaderTW.exe" "portable\YouTubeDownloaderTW.exe"
+          Copy-Item "README.md" "portable\README.md"
 
-      - name: 上傳可攜版
+      - name: Upload portable package
         uses: actions/upload-artifact@v4
         with:
-          name: YouTube下載器-Windows-可攜版
+          name: YouTubeDownloaderTW-Windows-Portable
           path: portable/
           if-no-files-found: error
