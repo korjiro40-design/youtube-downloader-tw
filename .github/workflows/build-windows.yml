@@ -1,0 +1,64 @@
+name: 建置 Windows 可攜版
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'main.py'
+      - 'requirements.txt'
+      - '.github/workflows/build-windows.yml'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: 取得原始碼
+        uses: actions/checkout@v4
+
+      - name: 安裝 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 安裝套件
+        run: pip install -r requirements.txt
+
+      - name: 下載 FFmpeg
+        shell: powershell
+        run: |
+          Invoke-WebRequest -Uri "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip" -OutFile ffmpeg.zip
+          Expand-Archive ffmpeg.zip -DestinationPath ffmpeg-temp
+          $ff = Get-ChildItem -Path ffmpeg-temp -Recurse -Filter ffmpeg.exe | Select-Object -First 1
+          Copy-Item $ff.FullName .\ffmpeg.exe
+
+      - name: 建置單一 EXE
+        shell: powershell
+        run: |
+          pyinstaller --noconfirm --clean --onefile --windowed --name "YouTube下載器" --add-binary "ffmpeg.exe;." --collect-all yt_dlp main.py
+
+      - name: 建立可攜包
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force portable
+          Copy-Item "dist\YouTube下載器.exe" "portable\YouTube下載器.exe"
+          Set-Content -Path "portable\使用說明.txt" -Encoding UTF8 -Value @"
+          YouTube 下載器・繁體中文版
+
+          使用方式：
+          1. 雙擊 YouTube下載器.exe
+          2. 貼上 YouTube 影片或播放清單網址
+          3. 選擇 MP4 / MP3
+          4. 選擇儲存位置
+          5. 按「開始下載」
+
+          不需要安裝 Python，也不需要使用命令提示字元。
+          請僅下載你有權保存的內容。
+          "@
+
+      - name: 上傳可攜版
+        uses: actions/upload-artifact@v4
+        with:
+          name: YouTube下載器-Windows-可攜版
+          path: portable/
+          if-no-files-found: error
