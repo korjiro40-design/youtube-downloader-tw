@@ -42,19 +42,7 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force portable
           Copy-Item "dist\YouTube下載器.exe" "portable\YouTube下載器.exe"
-          Set-Content -Path "portable\使用說明.txt" -Encoding UTF8 -Value @"
-          YouTube 下載器・繁體中文版
-
-          使用方式：
-          1. 雙擊 YouTube下載器.exe
-          2. 貼上 YouTube 影片或播放清單網址
-          3. 選擇 MP4 / MP3
-          4. 選擇儲存位置
-          5. 按「開始下載」
-
-          不需要安裝 Python，也不需要使用命令提示字元。
-          請僅下載你有權保存的內容。
-          "@
+          Copy-Item "README.md" "portable\使用說明.md"
 
       - name: 上傳可攜版
         uses: actions/upload-artifact@v4
